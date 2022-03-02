@@ -1,6 +1,7 @@
 import asyncio
 import websockets
 import json
+import traceback
 
 from dataclasses import dataclass
 from types import SimpleNamespace
@@ -53,7 +54,8 @@ class GatewayCon(object):
             try:
                 await self.handle_message(decoded)
             except Exception as e:
-                print(e)
+                print(f"exception in handler: {e}")
+                traceback.print_exc()
 
     async def _send_loop(self, ws):
         while True:
@@ -66,12 +68,13 @@ class GatewayCon(object):
                 await ws.send(strmsg)
             except Exception as e:
                 print(f"exception in send: {e}")
+                traceback.print_exc()
 
     async def _ping_loop(self, ws):
         while True:
             await asyncio.sleep(self._pulse)
             ping = {"op": 11}
-            #await self.send(ping)
+            await self.send(ping)
 
 
     async def handle_message(self, msg):
