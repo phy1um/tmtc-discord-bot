@@ -1,0 +1,8 @@
+{
+  "token_file": ".token",
+  "message_id": "955759505482866708",
+  "emoji_roles": {
+    "announcement": "🔴"
+  },
+  "log_level": "DEBUG"
+}

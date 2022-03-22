@@ -1,3 +1,4 @@
+import logging as log
 from gateway import GatewayCon
 
 LIB_NAME = "tmtc-dispy"
@@ -10,9 +11,9 @@ class Gateway(GatewayCon):
         self._handlers = {}
 
     async def handle_message(self, msg):
-        print(msg)
+        log.debug(f"gateway handle: {msg}")
         if msg.op == 10:
-            print("got HELLO, sending identify")
+            log.info("recieve HELLO, sending identify")
             self._pulse = msg.data.heartbeat_interval / 1000
             identity = {
                 "op": 2,
@@ -27,13 +28,13 @@ class Gateway(GatewayCon):
                 }
             }
             await self.send(identity)
-            print("done identify")
+            log.info("done identify")
         elif msg.op == 0:
             event = msg.name.lower()
             if event in self._handlers:
                 await self._handlers[event](msg)
             else:
-                print(f"unhandled event {event}")
+                log.debug(f"unhandled event {event}")
         else:
             raise Exception(f"unknown op in message {msg.op}")
 
@@ -47,11 +48,11 @@ if __name__ == "__main__":
 
         @g.event
         async def ready(x):
-            print("ready")
+            log.info("ready")
 
         @g.event
         async def message_reaction_add(x):
-            print("reaction added")
+            log.info("reaction added")
 
         g.run()
         

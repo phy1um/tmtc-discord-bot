@@ -6,6 +6,8 @@ import traceback
 from dataclasses import dataclass
 from types import SimpleNamespace
 
+import logging as log
+
 GATEWAY_URL = "wss://gateway.discord.gg/"
 
 @dataclass
@@ -30,6 +32,7 @@ def decode_msg(msg):
 
 class GatewayCon(object):
     def __init__(self, token):
+        log.info("init Gateway Connection")
         self._token = token
         self._q = asyncio.Queue()
         self._pulse = 1
@@ -39,12 +42,13 @@ class GatewayCon(object):
         loop.run_until_complete(self._run_connection())
 
     async def _run_connection(self):
+        log.info("running Gateway")
         wsurl = f"{GATEWAY_URL}/?v=9&encoding=json"
         async with websockets.connect(wsurl) as ws:
             send = asyncio.create_task(self._send_loop(ws))
             recv = asyncio.create_task(self._recv_loop(ws))
-            #ping = asyncio.create_task(self._ping_loop(ws))
-            #await ping
+            ping = asyncio.create_task(self._ping_loop(ws))
+            await ping
             await send
             await recv
 
@@ -54,7 +58,7 @@ class GatewayCon(object):
             try:
                 await self.handle_message(decoded)
             except Exception as e:
-                print(f"exception in handler: {e}")
+                log.error(f"exception in handler: {e}")
                 traceback.print_exc()
 
     async def _send_loop(self, ws):
@@ -62,18 +66,18 @@ class GatewayCon(object):
             try:
                 msg = await self._q.get()
                 strmsg = json.dumps(msg)
-                if "token" in msg["d"]:
-                    msg["d"]["token"] = "***"
-                print(msg)
+                #if "token" in msg["d"]:
+                #    msg["d"]["token"] = "***"
+                log.debug(f"gateway send: {msg}")
                 await ws.send(strmsg)
             except Exception as e:
-                print(f"exception in send: {e}")
+                log.error(f"exception in send: {e}")
                 traceback.print_exc()
 
     async def _ping_loop(self, ws):
         while True:
             await asyncio.sleep(self._pulse)
-            ping = {"op": 11}
+            ping = {"op": 1, "d": None}
             await self.send(ping)
 
 
@@ -81,7 +85,7 @@ class GatewayCon(object):
         pass
 
     async def send(self, msg):
-        print("pushing msg to send")
+        log.debug("pushing msg to send")
         await self._q.put(msg)
 
 class GatewayPrinter(GatewayCon):

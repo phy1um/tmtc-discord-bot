@@ -1,4 +1,5 @@
 from constants import *
+import logging as log
 
 import requests
 
@@ -16,6 +17,7 @@ def handle_api_response(resp):
 
 class DiscordAPI(object):
     def __init__(self, token):
+        log.info("init Discord REST API")
         self._token = token
         
     def run(self, path, method, body=None):
