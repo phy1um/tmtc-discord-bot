@@ -4,5 +4,10 @@
   "emoji_roles": {
     "announcement": "🔴"
   },
-  "log_level": "DEBUG"
+  "log_level": "DEBUG",
+  "status_msg": {
+    "offline": "🤖 Bot offile 🤖",
+    "online": "💡 Bot Online 💡"
+  }
 }
+

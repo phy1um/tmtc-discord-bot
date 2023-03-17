@@ -36,6 +36,9 @@ class DiscordAPI(object):
         elif method == "POST":
             resp = requests.post(url, headers=headers, body=body)
             return handle_api_response(resp)
+        elif method == "DELETE":
+            resp = requests.delete(url, headers=headers)
+            return handle_api_response(resp)
         else:
             raise Exception("unsupported HTTP method {method}")
        

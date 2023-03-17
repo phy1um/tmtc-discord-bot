@@ -53,5 +53,20 @@ if __name__ == "__main__":
             log.info(f"adding announce role to {user_id}") 
             bot.api.run(f"/guilds/{GUILD_ID}/members/{user_id}/roles/{ANNOUNCEMENT_ROLE}", "PUT")
 
+    @bot.event
+    async def message_reaction_remove(msg):
+        emoji = msg.data.emoji["name"]
+        if msg.data.message_id != cfg.message_id:
+            log.debug(f"wrong message id, skipping remove")
+            return
+        if emoji not in cfg.emoji:
+            log.debug(f"unknown emoji, skipping")
+            return
+        event_type = cfg.emoji[emoji]
+        if event_type == "announcement":
+            user_id = msg.data.user_id
+            log.info("removing announce role from {user_id}")
+            bot.api.run(f"/guilds/{GUILD_ID}/members/{user_id}/roles/{ANNOUNCEMENT_ROLE}", "DELETE")
+
     bot.run_gateway()
 
