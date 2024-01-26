@@ -1,72 +1,45 @@
 from constants import *
-from gateway_protocol import Gateway
-from api import DiscordAPI
+from discord.gateway_protocol import Gateway
+from discord.api import DiscordAPI
 import bot_config as config
+
+from botaction import *
+
+from action.assign_role import AssignRoleOnReact
 
 import logging as log
 
 
 log.basicConfig(encoding='utf-8', level=log.DEBUG)
 
+class ReadyLogger(APIBotActor):
+    def __init__(self, bot, cfg, gw, api):
+        bot.define_event_handler(self.ready)
 
-class Bot(object):
-    def __init__(self, token):
-        self.g = Gateway(token)
-        self.api = DiscordAPI(token)
-
-    def run_gateway(self):
-        self.g.run()
-
-    def event(self, f):
-        return self.g.event(f)
+    async def ready(self, msg):
+        log.info("gateway connection ready")
 
 
 
 if __name__ == "__main__":
-    print("===  bot startup  ===")
+    import sys
     cfg = config.from_file("config.json")
 
     log_level = log.getLevelName(cfg.log_level)
+    log.basicConfig(encoding='utf-8', level=log_level, stream=sys.stdout)
+    logfile = open("log", "a")
+    handler = log.StreamHandler(logfile)
+    handler.setLevel(log.DEBUG)
+    formatter = log.Formatter('[%(asctime)s][%(name)s:%(levelname)s]:: %(message)s')
+    handler.setFormatter(formatter)
+    log.getLogger().addHandler(handler)
 
-    bot = Bot(cfg.token)
+    gw = Gateway(cfg.token)
+    api = DiscordAPI(cfg.token)
+    bot = APIBot(cfg, gw, api)
 
-    @bot.event
-    async def ready(x):
-        log.info("gateway connection ready")
+    bot.register_actor(ReadyLogger)
+    bot.register_actor(AssignRoleOnReact, "emoji_roles")
 
-    @bot.event
-    async def message_reaction_add(msg):
-        emoji = msg.data.emoji["name"]
-        if msg.data.message_id != cfg.message_id:
-            # wrong message, do nothing
-            log.debug(f"wrong message id, skipping")
-            return
-
-        if emoji not in cfg.emoji:
-            # unknown emoji, do nothing
-            log.debug(f"unknown emoji, skipping")
-            return
-
-        event_type = cfg.emoji[emoji]
-        if event_type == "announcement":
-            user_id = msg.data.user_id
-            log.info(f"adding announce role to {user_id}") 
-            bot.api.run(f"/guilds/{GUILD_ID}/members/{user_id}/roles/{ANNOUNCEMENT_ROLE}", "PUT")
-
-    @bot.event
-    async def message_reaction_remove(msg):
-        emoji = msg.data.emoji["name"]
-        if msg.data.message_id != cfg.message_id:
-            log.debug(f"wrong message id, skipping remove")
-            return
-        if emoji not in cfg.emoji:
-            log.debug(f"unknown emoji, skipping")
-            return
-        event_type = cfg.emoji[emoji]
-        if event_type == "announcement":
-            user_id = msg.data.user_id
-            log.info("removing announce role from {user_id}")
-            bot.api.run(f"/guilds/{GUILD_ID}/members/{user_id}/roles/{ANNOUNCEMENT_ROLE}", "DELETE")
-
-    bot.run_gateway()
+    bot.run()
 

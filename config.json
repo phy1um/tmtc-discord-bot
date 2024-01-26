@@ -1,8 +1,17 @@
 {
   "token_file": ".token",
-  "message_id": "955759505482866708",
-  "emoji_roles": {
-    "announcement": "🔴"
+  "log_channel": "1194256437514342431",
+  "shared": {
+    "guild_id": "878926572235665418"
+  },
+  "actions": {
+    "emoji_roles": {
+      "message_id": "955759505482866708",
+      "channel_id": "955759276259950592",
+      "emoji": {
+        "🔴": "Announcements"
+      }
+  }
   },
   "log_level": "DEBUG",
   "status_msg": {

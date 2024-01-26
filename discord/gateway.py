@@ -35,7 +35,7 @@ class GatewayCon(object):
         log.info("init Gateway Connection")
         self._token = token
         self._q = asyncio.Queue()
-        self._pulse = 1
+        self._pulse = 0.9
 
     def run(self):
         loop = asyncio.get_event_loop()
@@ -44,22 +44,27 @@ class GatewayCon(object):
     async def _run_connection(self):
         log.info("running Gateway")
         wsurl = f"{GATEWAY_URL}/?v=9&encoding=json"
-        async with websockets.connect(wsurl) as ws:
-            send = asyncio.create_task(self._send_loop(ws))
-            recv = asyncio.create_task(self._recv_loop(ws))
-            ping = asyncio.create_task(self._ping_loop(ws))
-            await ping
-            await send
-            await recv
+        while True:
+            async with websockets.connect(wsurl) as ws:
+                send = asyncio.create_task(self._send_loop(ws))
+                recv = asyncio.create_task(self._recv_loop(ws))
+                ping = asyncio.create_task(self._ping_loop(ws))
+                await ping
+                await send
+                await recv
+
 
     async def _recv_loop(self, ws):
-        async for msg in ws:
-            decoded = decode_msg(msg)
-            try:
-                await self.handle_message(decoded)
-            except Exception as e:
-                log.error(f"exception in handler: {e}")
-                traceback.print_exc()
+        while True:
+            async for msg in ws:
+                decoded = decode_msg(msg)
+                log.debug(f"decoded = {decoded}")
+                try:
+                    await self.handle_message(decoded)
+                except Exception as e:
+                    log.error(f"exception in handler: {e}")
+                    traceback.print_exc()
+            log.debug("websocket got closed?")
 
     async def _send_loop(self, ws):
         while True:

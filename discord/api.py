@@ -34,7 +34,7 @@ class DiscordAPI(object):
             resp = requests.put(url, headers=headers)
             return handle_api_response(resp)
         elif method == "POST":
-            resp = requests.post(url, headers=headers, body=body)
+            resp = requests.post(url, headers=headers, json=body)
             return handle_api_response(resp)
         elif method == "DELETE":
             resp = requests.delete(url, headers=headers)

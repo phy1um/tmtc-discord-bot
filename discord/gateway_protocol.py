@@ -39,11 +39,13 @@ class Gateway(GatewayCon):
         else:
             raise Exception(f"unknown op in message {msg.op}")
 
-    def event(self, f):
+    def define_event_handler(self, f):
         fname = f.__name__
+        log.debug(f"define handler: {fname}")
         if fname not in self._handlers:
             self._handlers[fname] = []
         self._handlers[fname].append(f)
+        return f
 
 if __name__ == "__main__":
     with open(".token") as token_file:
