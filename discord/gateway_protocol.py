@@ -31,6 +31,7 @@ class Gateway(GatewayCon):
             log.info("done identify")
         elif msg.op == 0:
             event = msg.name.lower()
+            log.debug("handle event: " + event)
             if event in self._handlers:
                 for h in self._handlers[event]:
                     await h(msg)

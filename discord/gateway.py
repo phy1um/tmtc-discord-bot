@@ -44,27 +44,25 @@ class GatewayCon(object):
     async def _run_connection(self):
         log.info("running Gateway")
         wsurl = f"{GATEWAY_URL}/?v=9&encoding=json"
-        while True:
-            async with websockets.connect(wsurl) as ws:
-                send = asyncio.create_task(self._send_loop(ws))
-                recv = asyncio.create_task(self._recv_loop(ws))
-                ping = asyncio.create_task(self._ping_loop(ws))
-                await ping
-                await send
-                await recv
+        async for ws in websockets.connect(wsurl):
+            send = asyncio.create_task(self._send_loop(ws))
+            recv = asyncio.create_task(self._recv_loop(ws))
+            ping = asyncio.create_task(self._ping_loop(ws))
+            await ping
+            await send
+            await recv
 
 
     async def _recv_loop(self, ws):
-        while True:
-            async for msg in ws:
-                decoded = decode_msg(msg)
-                log.debug(f"decoded = {decoded}")
-                try:
-                    await self.handle_message(decoded)
-                except Exception as e:
-                    log.error(f"exception in handler: {e}")
-                    traceback.print_exc()
-            log.debug("websocket got closed?")
+        async for msg in ws:
+            decoded = decode_msg(msg)
+            log.debug(f"decoded = {decoded}")
+            try:
+                await self.handle_message(decoded)
+            except Exception as e:
+                log.error(f"exception in handler: {e}")
+                traceback.print_exc()
+        log.debug("websocket got closed?")
 
     async def _send_loop(self, ws):
         while True:
@@ -74,6 +72,7 @@ class GatewayCon(object):
                 #if "token" in msg["d"]:
                 #    msg["d"]["token"] = "***"
                 log.debug(f"gateway send: {msg}")
+                self._q.task_done()
                 await ws.send(strmsg)
             except Exception as e:
                 log.error(f"exception in send: {e}")
@@ -82,6 +81,7 @@ class GatewayCon(object):
     async def _ping_loop(self, ws):
         while True:
             await asyncio.sleep(self._pulse)
+            log.debug("sending DISCORD ping")
             ping = {"op": 1, "d": None}
             await self.send(ping)
 
