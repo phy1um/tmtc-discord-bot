@@ -1,4 +1,5 @@
 import logging as log
+import time
 from discord.gateway import GatewayCon
 
 LIB_NAME = "tmtc-dispy"
@@ -9,6 +10,7 @@ class Gateway(GatewayCon):
     def __init__(self, token):
         super().__init__(token)
         self._handlers = {}
+        self._last_heartbeat = 0
 
     async def handle_message(self, msg):
         log.debug(f"gateway handle: {msg}")
@@ -29,6 +31,8 @@ class Gateway(GatewayCon):
             }
             await self.send(identity)
             log.info("done identify")
+        elif msg.op == 11:
+            self._last_heartbeat = time.time()
         elif msg.op == 0:
             event = msg.name.lower()
             log.debug("handle event: " + event)
